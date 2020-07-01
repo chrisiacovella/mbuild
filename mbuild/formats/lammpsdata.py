@@ -30,7 +30,7 @@ def write_lammpsdata(structure, filename, atom_style='full',
                     maxs=None,
                     detect_forcefield_style=True, nbfix_in_data_file=True,
                     use_urey_bradleys=False,
-                    use_rb_torsions=True, use_dihedrals=False):
+                    use_rb_torsions=True, use_dihedrals=False, adjust14=False):
     """Output a LAMMPS data file.
     
     Outputs a LAMMPS data file in the 'full' atom style format. Default units are 
@@ -321,9 +321,18 @@ def write_lammpsdata(structure, filename, atom_style='full',
         if forcefield:
             epsilons = np.array([atom.epsilon for atom in structure.atoms]) / epsilon_conversion_factor
             sigmas = np.array([atom.sigma for atom in structure.atoms]) / sigma_conversion_factor
+            if adjust14:
+                epsilons_14 = np.array([atom.epsilon_14 for atom in structure.atoms]) / epsilon_conversion_factor
+                sigmas_14 = np.array([atom.sigma_14 for atom in structure.atoms]) / sigma_conversion_factor
+
             forcefields = [atom.type for atom in structure.atoms]
             epsilon_dict = dict([(unique_types.index(atom_type)+1,epsilon) for atom_type,epsilon in zip(types,epsilons)])
             sigma_dict = dict([(unique_types.index(atom_type)+1,sigma) for atom_type,sigma in zip(types,sigmas)])
+
+            if adjust14:
+                epsilon_14_dict = dict([(unique_types.index(atom_type)+1,epsilon_14) for atom_type,epsilon_14 in zip(types,epsilons_14)])
+                sigma_14_dict = dict([(unique_types.index(atom_type)+1,sigma_14) for atom_type,sigma_14 in zip(types,sigmas_14)])
+
             forcefield_dict = dict([(unique_types.index(atom_type)+1,forcefield) for atom_type,forcefield in zip(types,forcefields)])
             
 
@@ -389,11 +398,17 @@ def write_lammpsdata(structure, filename, atom_style='full',
             else:
                 data.write('\nPair Coeffs # lj \n')
                 if unit_style == 'real':
-                    data.write('#\tepsilon (kcal/mol)\t\tsigma (Angstrom)\n')
+                    if adjust14:
+                        data.write('#\tepsilon (kcal/mol)\t\tsigma (Angstrom)\tepsilon_14 (kcal/mol)\t\tsigma_14 (Angstrom)\n ')
+                    else:
+                        data.write('#\tepsilon (kcal/mol)\t\tsigma (Angstrom)\n')
                 elif unit_style == 'lj':
                     data.write('#\treduced_epsilon \t\treduced_sigma \n')
                 for idx,epsilon in epsilon_dict.items():
-                    data.write('{}\t{:.5f}\t\t{:.5f}\t\t# {}\n'.format(idx,epsilon,sigma_dict[idx],forcefield_dict[idx]))
+                    if adjust14:
+                        data.write('{}\t{:.5f}\t\t{:.5f}\t\t{:.5f}\t\t{:.5f}\t\t# {}\n'.format(idx,epsilon,sigma_dict[idx], epsilon_14_dict[idx], sigma_14_dict[idx], forcefield_dict[idx]))
+                    else:
+                        data.write('{}\t{:.5f}\t\t{:.5f}\t\t# {}\n'.format(idx,epsilon,sigma_dict[idx],forcefield_dict[idx]))
 
             # Bond coefficients
             if bonds:
