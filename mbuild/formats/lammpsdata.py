@@ -30,7 +30,7 @@ def write_lammpsdata(structure, filename, atom_style='full',
                     maxs=None,
                     detect_forcefield_style=True, nbfix_in_data_file=True,
                     use_urey_bradleys=False,
-                    use_rb_torsions=True, use_dihedrals=False, adjust14=False):
+                    use_rb_torsions=True, use_dihedrals=False, adjust14=False, prec3=False):
     """Output a LAMMPS data file.
     
     Outputs a LAMMPS data file in the 'full' atom style format. Default units are 
@@ -69,6 +69,12 @@ def write_lammpsdata(structure, filename, atom_style='full',
     use_dihedrals:
         If True, will treat dihedrals as CHARMM-style dihedrals while looking for 
         `structure.dihedrals`
+    adjust14:
+        If True, it will write out epsilon 1-4 and sigma 1-4 values, needed for
+        CHARMM pair style
+    prec3:
+        If True, will write out particle positions with 3 decimal places
+        for atomstyle 'full' and 'real' units
 
     Notes
     -----
@@ -488,7 +494,10 @@ def write_lammpsdata(structure, filename, atom_style='full',
             atom_line = '{index:d}\t{zero:d}\t{type_index:d}\t{x:.6f}\t{y:.6f}\t{z:.6f}\n'
         elif atom_style == 'full':
             if unit_style == 'real':
-                atom_line ='{index:d}\t{zero:d}\t{type_index:d}\t{charge:.6f}\t{x:.6f}\t{y:.6f}\t{z:.6f}\n'
+                if prec3:
+                    atom_line ='{index:d}\t{zero:d}\t{type_index:d}\t{charge:.6f}\t{x:.3f}\t{y:.3f}\t{z:.3f}\n'
+                else:
+                    atom_line ='{index:d}\t{zero:d}\t{type_index:d}\t{charge:.6f}\t{x:.6f}\t{y:.6f}\t{z:.6f}\n'
             elif unit_style == 'lj':
                 atom_line ='{index:d}\t{zero:d}\t{type_index:d}\t{charge:.4e}\t{x:.6f}\t{y:.6f}\t{z:.6f}\n'
 
