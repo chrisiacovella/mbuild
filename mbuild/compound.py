@@ -1967,6 +1967,8 @@ class Compound(object):
         third level represents Particles (i.e., Compounds with no children).
         If the system contains a Particle(s) without any connections to other Compounds, it will
         appear in the 2nd level (with the top level self as a parent).
+        If no bonds are present in the system, this is the same as applying the flatten function.
+        For large compounds, return as a new Compound, i.e., inplace=False, is likely faster.
 
         Parameter
         ---------
@@ -1984,7 +1986,7 @@ class Compound(object):
 
         for molecule in connected_subgraph:
             if len(molecule) == 1:
-                ancestors = [molecule[0]]
+                ancestors = [clone(molecule[0])]
             else:
                 ancestors = IndexedSet(molecule[0].ancestors())
                 for particle in molecule[1:]:
@@ -2005,7 +2007,8 @@ class Compound(object):
             for child in [self.children]:
                 # Need to handle the case when child is a port
                 self.remove(child)
-                self.add(comp_list)
+                
+            self.add(comp_list)
         else:
             new_compound = Compound()
             new_compound.add(comp_list)
